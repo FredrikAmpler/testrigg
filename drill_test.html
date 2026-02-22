@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Borrtest Rig - Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #00d2ff;
+            --secondary: #3a7bd5;
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text: #f8fafc;
+            --accent: #f43f5e;
+            --success: #10b981;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 16px;
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        h1 { margin: 0; font-size: 1.5rem; color: var(--primary); }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-running { background: var(--success); color: white; box-shadow: 0 0 15px var(--success); }
+        .status-stopped { background: var(--accent); color: white; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+
+        .card h3 { margin: 0 0 10px 0; font-size: 0.9rem; color: #94a3b8; }
+        .card .value { font-size: 2rem; font-weight: bold; }
+        .card .unit { font-size: 1rem; color: #64748b; margin-left: 5px; }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content { grid-template-columns: 1fr; }
+        }
+
+        .chart-container {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+            height: 400px;
+        }
+
+        .controls {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; margin-bottom: 5px; font-size: 0.8rem; color: #94a3b8; }
+        input {
+            width: 100%;
+            padding: 10px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: white;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 10px;
+        }
+
+        .btn-start { background: var(--success); color: white; }
+        .btn-stop { background: var(--accent); color: white; }
+        .btn-secondary { background: #334155; color: white; }
+
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+
+        .stats-table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+        .stats-table td { padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .stats-table .label { color: #94a3b8; font-size: 0.85rem; }
+        .stats-table .val { text-align: right; font-weight: bold; }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div>
+            <h1>Borrtest Rig</h1>
+            <div id="connection-status" style="font-size: 0.7rem; color: #64748b;">Ansluter...</div>
+        </div>
+        <div id="run-status-badge" class="status-badge status-stopped">Stoppad</div>
+    </header>
+
+    <div class="grid">
+        <div class="card">
+            <h3>Effekt</h3>
+            <div class="value" id="val-power">0<span class="unit">W</span></div>
+        </div>
+        <div class="card">
+            <h3>Spänning</h3>
+            <div class="value" id="val-voltage">0<span class="unit">V</span></div>
+        </div>
+        <div class="card">
+            <h3>Cykler</h3>
+            <div class="value" id="val-cycles">0</div>
+        </div>
+        <div class="card">
+            <h3>Toppeffekt</h3>
+            <div class="value" id="val-peak">0<span class="unit">W</span></div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="chart-container">
+            <canvas id="powerChart"></canvas>
+        </div>
+
+        <div class="controls">
+            <h3>Inställningar</h3>
+            <div class="input-group">
+                <label>Tid PÅ (sekunder)</label>
+                <input type="number" id="in-on" value="5">
+            </div>
+            <div class="input-group">
+                <label>Tid AV (sekunder)</label>
+                <input type="number" id="in-off" value="5">
+            </div>
+            <div class="input-group">
+                <label>Effektgräns Larm (W)</label>
+                <input type="number" id="in-limit" value="1000">
+            </div>
+
+            <button class="btn btn-start" onclick="startTest()">STARTA TEST</button>
+            <button class="btn btn-stop" onclick="stopTest()">STOPPA</button>
+            <button class="btn btn-secondary" onclick="resetStats()">Nollställ Statistik</button>
+            <button class="btn btn-secondary" onclick="exportCSV()">Exportera CSV</button>
+
+            <table class="stats-table">
+                <tr><td class="label">Medel (Körning)</td><td class="val" id="stat-avg">0 W</td></tr>
+                <tr><td class="label">Median (Körning)</td><td class="val" id="stat-median">0 W</td></tr>
+                <tr><td class="label">Tidpunkt Topp</td><td class="val" id="stat-peak-time">-</td></tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    let chart;
+    let dataPoints = [];
+    let pollingInterval;
+    let masterPeak = 0;
+    let peakTimestamp = null;
+
+    // Tasmota API Path (Current host)
+    const apiBase = window.location.origin + "/cm?cmnd=";
+
+    function initChart() {
+        const ctx = document.getElementById('powerChart').getContext('2d');
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Effekt (W)',
+                    data: [],
+                    borderColor: '#00d2ff',
+                    backgroundColor: 'rgba(0, 210, 255, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { display: false },
+                    y: { 
+                        beginAtZero: true,
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: '#64748b' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+
+    async function sendCmd(cmd) {
+        try {
+            const resp = await fetch(apiBase + encodeURIComponent(cmd));
+            return await resp.json();
+        } catch (e) {
+            console.error("API Error:", e);
+            document.getElementById('connection-status').innerText = "Anslutningsfel!";
+            return null;
+        }
+    }
+
+    async function updateData() {
+        const status = await sendCmd("Status 8");
+        const mems = await sendCmd("Status 10");
+        
+        if (!status || !mems) return;
+
+        const power = status.StatusSNS.ENERGY.Power;
+        const voltage = status.StatusSNS.ENERGY.Voltage;
+        const cycles = mems.StatusPRM.Mem4 || 0;
+        const peak = mems.StatusPRM.Mem6 || 0;
+        const isRunning = mems.StatusPRM.Mem3 == "1";
+
+        // Update UI logic
+        document.getElementById('val-power').innerHTML = `${power}<span class="unit">W</span>`;
+        document.getElementById('val-voltage').innerHTML = `${voltage}<span class="unit">V</span>`;
+        document.getElementById('val-cycles').innerText = cycles;
+        document.getElementById('val-peak').innerHTML = `${peak}<span class="unit">W</span>`;
+        
+        const badge = document.getElementById('run-status-badge');
+        badge.innerText = isRunning ? "Körs" : "Stoppad";
+        badge.className = isRunning ? "status-badge status-running" : "status-badge status-stopped";
+        document.getElementById('connection-status').innerText = "Ansluten - " + new Date().toLocaleTimeString();
+
+        // Update Chart
+        if (isRunning || power > 0) {
+            const now = new Date();
+            dataPoints.push({ t: now, v: power });
+            
+            // Keep last 300 points in chart (~5 mins at 1s)
+            chart.data.labels.push(now.toLocaleTimeString());
+            chart.data.datasets[0].data.push(power);
+            
+            if (chart.data.labels.length > 300) {
+                chart.data.labels.shift();
+                chart.data.datasets[0].data.shift();
+            }
+            chart.update('none'); // Update without animation for performance
+
+            // Local Stats calculation
+            calculateLocalStats();
+
+            // Peak tracking logic
+            if (power > masterPeak) {
+                masterPeak = power;
+                peakTimestamp = now.toLocaleString();
+                document.getElementById('stat-peak-time').innerText = peakTimestamp;
+            }
+        }
+    }
+
+    function calculateLocalStats() {
+        if (dataPoints.length === 0) return;
+        
+        const values = dataPoints.map(p => p.v);
+        const avg = values.reduce((a, b) => a + b, 0) / values.length;
+        
+        const sorted = [...values].sort((a,b) => a-b);
+        const median = sorted.length % 2 !== 0 ? 
+            sorted[Math.floor(sorted.length/2)] : 
+            (sorted[sorted.length/2 - 1] + sorted[sorted.length/2]) / 2;
+
+        document.getElementById('stat-avg').innerText = Math.round(avg) + " W";
+        document.getElementById('stat-median').innerText = Math.round(median) + " W";
+    }
+
+    async function startTest() {
+        const onTime = document.getElementById('in-on').value;
+        const offTime = document.getElementById('in-off').value;
+        const limit = document.getElementById('in-limit').value;
+
+        await sendCmd(`Backlog Mem1 ${onTime}; Mem2 ${offTime}; Mem5 ${limit}; Mem3 1`);
+        dataPoints = []; // Reset local session data
+        chart.data.labels = [];
+        chart.data.datasets[0].data = [];
+        chart.update();
+    }
+
+    async function stopTest() {
+        await sendCmd("Mem3 0");
+    }
+
+    async function resetStats() {
+        if(confirm("Vill du nollställa antal cyklers och toppeffekt i pluggen?")) {
+            await sendCmd("Backlog Mem4 0; Mem6 0");
+            masterPeak = 0;
+            peakTimestamp = null;
+        }
+    }
+
+    function exportCSV() {
+        let csv = "Timestamp,Power(W)\n";
+        dataPoints.forEach(p => {
+            csv += `${p.t.toISOString()},${p.v}\n`;
+        });
+        
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('href', url);
+        a.setAttribute('download', `drill_test_${new Date().getTime()}.csv`);
+        a.click();
+    }
+
+    // Start
+    initChart();
+    updateData();
+    setInterval(updateData, 1000); // 1s polling
+</script>
+
+</body>
+</html>
