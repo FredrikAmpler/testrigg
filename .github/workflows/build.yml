@@ -1,0 +1,47 @@
+name: Build Tasmota Embedded
+on: [workflow_dispatch, push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Preparing Tasmota
+        run: |
+          pip install platformio
+          git clone --depth 1 https://github.com/arendst/Tasmota.git
+          
+          # 1. Skapa inbäddnings-modulen med Python
+          python3 -c "
+          import os
+          if not os.path.exists('start.html'):
+              print('FEL: start.html saknas i repon!')
+              exit(1)
+          with open('start.html', 'r', encoding='utf-8') as f: content = f.read()
+          with open('Tasmota/tasmota/tasmota_xdrv_driver/xdrv_99_dashboard.ino', 'w', encoding='utf-8') as f:
+              f.write('const char dashboard_html[] PROGMEM = R\"rawliteral(\" + content + \")rawliteral\";\\n')
+              f.write('void HandleDashboard() { if (!WebAuthenticate()) { Webserver->requestAuthentication(); return; } Webserver->send_P(200, \"text/html\", dashboard_html); }\\n')
+              f.write('boolean Xdrv99(uint8_t function) { if (24 == function) { Webserver->on(\"/start.html\", HandleDashboard); Webserver->on(\"/start\", HandleDashboard); } return false; }\\n')
+          "
+
+          # 2. Konfigurera Tasmota
+          cat <<EOF > Tasmota/tasmota/user_config_override.h
+          #ifndef _USER_CONFIG_OVERRIDE_H_
+          #define _USER_CONFIG_OVERRIDE_H_
+          #define WIFI_CONFIG_TOOL 5
+          #endif
+          EOF
+
+      - name: Compilation
+        run: |
+          cd Tasmota
+          pio run -e tasmota
+          
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: tasmota-embedded
+          path: Tasmota/.pio/build/tasmota/firmware.bin
