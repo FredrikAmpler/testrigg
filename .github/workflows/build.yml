@@ -17,17 +17,23 @@ jobs:
           # 1. Skapa inbäddnings-modulen med Python
           python3 -c "
           import os
-          if not os.path.exists('start.html'):
-              print('FEL: start.html saknas i repon!')
-              exit(1)
           with open('start.html', 'r', encoding='utf-8') as f: content = f.read()
           with open('Tasmota/tasmota/tasmota_xdrv_driver/xdrv_99_dashboard.ino', 'w', encoding='utf-8') as f:
-              f.write('const char dashboard_html[] PROGMEM = R\"rawliteral(\" + content + \")rawliteral\";\\n')
-              f.write('void HandleDashboard() { if (!WebAuthenticate()) { Webserver->requestAuthentication(); return; } Webserver->send_P(200, \"text/html\", dashboard_html); }\\n')
-              f.write('boolean Xdrv99(uint8_t function) { if (24 == function) { Webserver->on(\"/start.html\", HandleDashboard); Webserver->on(\"/start\", HandleDashboard); } return false; }\\n')
+              f.write('#ifdef USE_WEBSERVER\n')
+              # Vi använder en unik marker 'DASH_HTML' för att inte krocka med tecken i din HTML
+              f.write('const char dashboard_html[] PROGMEM = R\"DASH_HTML(' + content + ')DASH_HTML\";\n')
+              f.write('void HandleDashboard() { Webserver->send_P(200, \"text/html\", dashboard_html); }\n')
+              f.write('void DashInit() { Webserver->on(\"/start.html\", HandleDashboard); Webserver->on(\"/start\", HandleDashboard); }\n')
+              f.write('#endif\n')
           "
 
-          # 2. Konfigurera Tasmota
+          # 2. Tvinga Tasmota att registrera dashboarden i webbservern
+          # Lägg till prototypen högst upp i webbserver-filen
+          sed -i '1i void DashInit();' Tasmota/tasmota/tasmota_xdrv_driver/xdrv_01_9_webserver.ino
+          # Skjut in anropet precis där alla andra web-handlers skapas
+          sed -i '/XdrvXsnsCall(FUNC_WEB_ADD_HANDLER);/a \      DashInit();' Tasmota/tasmota/tasmota_xdrv_driver/xdrv_01_9_webserver.ino
+          
+          # 3. Konfigurera WiFi-stabilitet
           cat <<EOF > Tasmota/tasmota/user_config_override.h
           #ifndef _USER_CONFIG_OVERRIDE_H_
           #define _USER_CONFIG_OVERRIDE_H_
