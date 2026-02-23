@@ -85,14 +85,11 @@
         
         // Avgör om vi kör direkt i pluggen eller som lokal fil
         function getApiBase() {
-            if (window.location.protocol === "file:") {
-                const ip = prompt("Skriv in pluggens IP-adress (t.ex. 192.168.1.130):", "192.168.1.130");
-                return `http://${ip}/cm?cmnd=`;
-            }
-            return "/cm?cmnd="; // Relativ sökväg när vi kör inuti pluggen
+            return "/cm?cmnd=";
         }
 
         const apiBase = getApiBase();
+        
 
         function initChart() {
             if (typeof Chart === 'undefined') {
