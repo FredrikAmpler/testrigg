@@ -251,25 +251,25 @@
             margin-bottom: 20px;
         }
 
-        .time-inputs div {
+        .time-inputs>div {
             background: rgba(0, 0, 0, 0.2);
             padding: 10px;
             border-radius: 10px;
-            text-align: center;
+            text-align: left;
         }
 
         input[type="number"] {
-            width: 60px;
+            width: 100%;
             background: rgba(255, 255, 255, 0.05);
             border: none;
             border-bottom: 2px solid var(--primary);
             color: white;
             font-size: 1.1rem;
             font-weight: bold;
-            text-align: center;
+            text-align: left;
             outline: none;
             border-radius: 4px 4px 0 0;
-            padding: 4px 0;
+            padding: 8px 4px;
         }
 
         .btn {
@@ -471,7 +471,7 @@
                 <h3>Cykler</h3>
                 <div id="cyc" class="value-large">0</div>
                 <div
-                    style="font-size: 0.75rem; color: #94a3b8; margin-top: 12px; display: flex; flex-direction: column; gap: 4px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px;">
+                    style="font-size: 0.85rem; color: #94a3b8; margin-top: 12px; display: flex; flex-direction: column; gap: 4px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px;">
                     <div>Start: <b id="cyc-start" style="color:var(--text)">-</b></div>
                     <div>Stopp: <b id="cyc-stop" style="color:var(--text)">-</b></div>
                     <div style="margin-top: 4px;">Aktiv körtid: <b id="cyc-run" style="color:var(--text)">-</b></div>
@@ -496,61 +496,56 @@
                 </div>
 
                 <div class="time-inputs">
-                    <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
-                        <small>Kör (s)</small>
+                    <div style="display: flex; flex-direction: column; align-items: stretch; gap: 5px;">
+                        <small style="font-size: 0.85rem;">Kör (s)</small>
                         <input type="number" id="t-on" value="10" oninput="updateCycleStats()">
                         <div
                             style="text-align: left; align-self: stretch; margin-top: 5px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 5px;">
-                            <small style="color:#94a3b8; font-size: 0.65rem; display: block;">Cykler/h: <b id="c-ph"
+                            <small style="color:#94a3b8; font-size: 0.8rem; display: block;">Cykler/h: <b id="c-ph"
                                     style="color:var(--primary)">-</b></small>
-                            <small style="color:#94a3b8; font-size: 0.65rem; display: block;">Körtid/h: <b id="rt-ph"
+                            <small style="color:#94a3b8; font-size: 0.8rem; display: block;">Körtid/h: <b id="rt-ph"
                                     style="color:var(--text)">-</b></small>
                         </div>
                     </div>
-                    <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
-                        <small>Vila (s)</small>
+                    <div style="display: flex; flex-direction: column; align-items: stretch; gap: 5px;">
+                        <small style="font-size: 0.85rem;">Vila (s)</small>
                         <input type="number" id="t-off" value="2" oninput="updateCycleStats()">
                         <div
                             style="text-align: left; align-self: stretch; margin-top: 5px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 5px;">
-                            <small style="color:#94a3b8; font-size: 0.65rem; display: block;">Cykler/dag: <b id="c-pd"
+                            <small style="color:#94a3b8; font-size: 0.8rem; display: block;">Cykler/dag: <b id="c-pd"
                                     style="color:var(--primary)">-</b></small>
-                            <small style="color:#94a3b8; font-size: 0.65rem; display: block;">Körtid/dag: <b id="rt-pd"
+                            <small style="color:#94a3b8; font-size: 0.8rem; display: block;">Körtid/dag: <b id="rt-pd"
                                     style="color:var(--text)">-</b></small>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="control-row"
-                    style="flex-direction: column; align-items: stretch; gap: 10px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 15px;">
-                        <div style="flex: 1;">
-                            <small style="display: block; margin-bottom: 5px;">Stopp efter antal cykler</small>
-                            <input type="number" id="t-stop-cyc" placeholder="-" oninput="updateCycleStats()"
-                                style="width: 100%; max-width: none;">
-                        </div>
-                        <div
-                            style="flex: 1.5; text-align: left; background: rgba(0,0,0,0.1); padding: 8px; border-radius: 8px; min-height: 60px;">
-                            <small style="color:#94a3b8; font-size: 0.65rem; display: block;">Total tid: <b
-                                    id="total-dur" style="color:var(--text)">-</b></small>
-                            <small style="color:#94a3b8; font-size: 0.65rem; display: block;">Klar kl: <b id="total-eta"
-                                    style="color:var(--primary)">-</b></small>
-                            <small style="color:#94a3b8; font-size: 0.65rem; display: block;">Total körtid: <b
-                                    id="total-run" style="color:var(--text)">-</b></small>
                         </div>
                     </div>
                 </div>
 
                 <div class="time-inputs">
-                    <div>
-                        <small>Stoppgräns (W)</small><br>
+                    <div style="display: flex; flex-direction: column; align-items: stretch; gap: 5px;">
+                        <small style="font-size: 0.85rem;">Stopp efter antal cykler</small>
+                        <input type="number" id="t-stop-cyc" placeholder="-" oninput="updateCycleStats()">
+                    </div>
+                    <div style="display: flex; flex-direction: column; justify-content: center; gap: 6px;">
+                        <small style="color:#94a3b8; font-size: 0.8rem; display: block;">Total tid: <b id="total-dur"
+                                style="color:var(--text)">-</b></small>
+                        <small style="color:#94a3b8; font-size: 0.8rem; display: block;">Klar kl: <b id="total-eta"
+                                style="color:var(--primary)">-</b></small>
+                        <small style="color:#94a3b8; font-size: 0.8rem; display: block;">Total körtid: <b id="total-run"
+                                style="color:var(--text)">-</b></small>
+                    </div>
+                </div>
+
+                <div class="time-inputs">
+                    <div style="display: flex; flex-direction: column; align-items: stretch; gap: 5px;">
+                        <small style="font-size: 0.85rem;">Motorskydd (W)</small>
                         <input type="number" id="t-limit" value="1000" onchange="updateSecurityRule()">
-                        <div style="margin-top:2px"><small style="color:#94a3b8; font-size: 0.65rem;">Rek +25%</small>
+                        <div style="margin-top:4px"><small style="color:#94a3b8; font-size: 0.8rem;">Rek +25%</small>
                         </div>
                     </div>
-                    <div>
-                        <small>Tröghet (s)</small><br>
+                    <div style="display: flex; flex-direction: column; align-items: stretch; gap: 5px;">
+                        <small style="font-size: 0.85rem;">Tröghet (s)</small>
                         <input type="number" id="t-delay" value="1" onchange="cmd('Mem4 ' + this.value)">
-                        <div style="margin-top:2px"><small style="color:#94a3b8; font-size: 0.65rem;">Rek 3 sek</small>
+                        <div style="margin-top:4px"><small style="color:#94a3b8; font-size: 0.8rem;">Rek 3 sek</small>
                         </div>
                     </div>
                 </div>
