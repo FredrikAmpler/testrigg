@@ -660,16 +660,37 @@
 
             // Low freq polling (Var1 and Var2)
             if (now - lastLowFreqTs > 4000) {
-                const lf = await cmd("Status 4");
+                const lf = await cmd("Backlog Var1; Var2");
                 lastLowFreqTs = now;
-                if (lf && lf.StatusMEM) {
-                    if (lf.StatusMEM.Var1 === "" || lf.StatusMEM.Var2 === "") {
+
+                // Backlog returns an array of results: [{"Var1":"..."}, {"Var2":"..."}]
+                // Let's protect against empty formats
+                if (lf && Array.isArray(lf) && lf.length >= 2) {
+                    const var1Val = lf[0].Var1;
+                    const var2Val = lf[1].Var2;
+
+                    if (var1Val === "" || var2Val === "") {
+                        // Endast vid cold boot null-strängar
                         await cmd("Backlog Var1 0; Var2 0");
                         tasmotaCyc = 0;
                         tasmotaPeak = 0;
                     } else {
-                        tasmotaCyc = parseFloat(lf.StatusMEM.Var1 || 0);
-                        tasmotaPeak = parseFloat(lf.StatusMEM.Var2 || 0);
+                        tasmotaCyc = parseFloat(var1Val || 0);
+                        tasmotaPeak = parseFloat(var2Val || 0);
+                    }
+                } else if (lf && lf.Var1 !== undefined) {
+                    // Fallback if not returned as array for some reason
+                    if (lf.Var1 === "") {
+                        await cmd("Var1 0");
+                        tasmotaCyc = 0;
+                    } else {
+                        tasmotaCyc = parseFloat(lf.Var1 || 0);
+                    }
+                    if (lf.Var2 === "") {
+                        await cmd("Var2 0");
+                        tasmotaPeak = 0;
+                    } else {
+                        tasmotaPeak = parseFloat(lf.Var2 || 0);
                     }
                 }
             }
