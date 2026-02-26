@@ -649,14 +649,17 @@
 
             // High freq polling
             const hRes = await cmd("Backlog Status 8; Status 11");
-            if (!hRes || !hRes.StatusSNS || !hRes.StatusSTS) return;
+            if (!hRes || !Array.isArray(hRes) || hRes.length < 2 || !hRes[0].StatusSNS || !hRes[1].StatusSTS) {
+                setTimeout(update, 2000);
+                return;
+            }
 
-            const rawP = hRes.StatusSNS.ENERGY.Power;
-            const rawV = hRes.StatusSNS.ENERGY.Voltage;
-            const rawA = hRes.StatusSNS.ENERGY.Current;
-            const load = hRes.StatusSTS.LoadAvg || 0;
-            const isRelayOn = (hRes.StatusSTS.POWER1 === "ON" || hRes.StatusSTS.POWER1 === 1);
-            const isLoopOn = (hRes.StatusSTS.POWER3 === "ON" || hRes.StatusSTS.POWER3 === 1);
+            const rawP = hRes[0].StatusSNS.ENERGY.Power;
+            const rawV = hRes[0].StatusSNS.ENERGY.Voltage;
+            const rawA = hRes[0].StatusSNS.ENERGY.Current;
+            const load = hRes[1].StatusSTS.LoadAvg || 0;
+            const isRelayOn = (hRes[1].StatusSTS.POWER1 === "ON" || hRes[1].StatusSTS.POWER1 === 1);
+            const isLoopOn = (hRes[1].StatusSTS.POWER3 === "ON" || hRes[1].StatusSTS.POWER3 === 1);
 
             // Low freq polling (Var1 and Var2)
             if (now - lastLowFreqTs > 4000) {
