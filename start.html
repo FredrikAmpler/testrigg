@@ -715,15 +715,27 @@
 
             document.getElementById('relay-lamp').classList.toggle('active', isRelayOn);
 
-            // Store logs for stats and CSV
-            const isLooping = isLoopOn;
-            if (p > 1 || isLooping) {
-                const now = new Date();
-                logs.push({ t: now.toLocaleTimeString(), ts: now.toISOString(), v, a, p });
+            // Data collection for the current active period
+            const isActivePeriod = isLoopOn || isRelayOn;
+
+            // Only scroll the chart if we are in an active period
+            if (chart && isActivePeriod) {
+                chart.data.labels.push("");
+                chart.data.datasets[0].data.push(p);
+                if (chart.data.labels.length > 100) {
+                    chart.data.labels.shift();
+                    chart.data.datasets[0].data.shift();
+                }
+                chart.update('none');
+            }
+
+            if (isActivePeriod) {
+                const nowLog = new Date();
+                logs.push({ t: nowLog.toLocaleTimeString(), ts: nowLog.toISOString(), v, a, p });
                 p_pts.push(p); v_pts.push(v); a_pts.push(a);
 
-                // Track current run
-                if (p > 1) {
+                // Track current run (Senaste) when drill is running (> 5W)
+                if (p > 5) {
                     curRun.v.push(v); curRun.a.push(a); curRun.p.push(p);
                 } else if (curRun.p.length > 0) {
                     // Run just ended
@@ -740,7 +752,7 @@
 
                 calc(peak);
             } else if (curRun.p.length > 0) {
-                // Handle run ending when power drops but we were in a run
+                // Handle run ending when period ends
                 const rs = {
                     v: getStats(curRun.v).med,
                     a: getStats(curRun.a).med,
@@ -751,16 +763,6 @@
                 lastRun = rs;
                 curRun = { v: [], a: [], p: [] };
                 calc(peak);
-            }
-
-            if (chart) {
-                chart.data.labels.push("");
-                chart.data.datasets[0].data.push(p);
-                if (chart.data.labels.length > 100) {
-                    chart.data.labels.shift();
-                    chart.data.datasets[0].data.shift();
-                }
-                chart.update('none');
             }
 
             // Determine next poll interval based on LoadAvg
