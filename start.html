@@ -407,7 +407,9 @@
 <body>
     <div class="container">
         <header>
-            <h1 style="margin:0; font-size: 1.3rem;">Amplified <span style="color:var(--primary)">testrigg</span></h1>
+            <h1 style="margin:0; font-size: 1.3rem;">Amplified <span style="color:var(--primary)">testrigg</span><span
+                    id="load-warn"
+                    style="font-size:0.75rem; color:var(--accent); margin-left:10px; font-weight:normal;"></span></h1>
             <div class="header-right">
                 <div class="lamp-container">
                     <span class="lamp-label">Relä</span>
@@ -498,7 +500,8 @@
                 <div class="time-inputs">
                     <div style="display: flex; flex-direction: column; align-items: stretch; gap: 5px;">
                         <small style="font-size: 0.85rem;">Kör (s)</small>
-                        <input type="number" id="t-on" value="10" oninput="updateCycleStats()">
+                        <input type="number" id="t-on" value="10" oninput="updateCycleStats()"
+                            onchange="cmd('Mem1 ' + this.value)">
                         <div
                             style="text-align: left; align-self: stretch; margin-top: 5px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 5px;">
                             <small style="color:#94a3b8; font-size: 0.8rem; display: block;">Cykler/h: <b id="c-ph"
@@ -509,7 +512,8 @@
                     </div>
                     <div style="display: flex; flex-direction: column; align-items: stretch; gap: 5px;">
                         <small style="font-size: 0.85rem;">Vila (s)</small>
-                        <input type="number" id="t-off" value="2" oninput="updateCycleStats()">
+                        <input type="number" id="t-off" value="2" oninput="updateCycleStats()"
+                            onchange="cmd('Mem2 ' + this.value)">
                         <div
                             style="text-align: left; align-self: stretch; margin-top: 5px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 5px;">
                             <small style="color:#94a3b8; font-size: 0.8rem; display: block;">Cykler/dag: <b id="c-pd"
@@ -565,6 +569,7 @@
         const LOCK_TIME = 2000;
         let vPrec = 0, aPrec = 1, pPrec = 1;
         let loopStartTime = null, loopStopTime = null, activeTimeSec = 0, lastLoopState = false, lastUpdateTs = Date.now();
+        let lastLowFreqTs = 0, tasmotaCyc = 0, tasmotaPeak = 0;
 
         function formatTimeHM(sec) {
             const h = Math.floor(sec / 3600);
@@ -627,31 +632,47 @@
 
         async function cmd(c) { try { return await (await fetch(api + encodeURIComponent(c))).json(); } catch (e) { return null; } }
 
-        // Initial Load: Load Mem values from Tasmota
+        // Initial Load: Load Mem values from Tasmota using Status 1
         async function loadSettings() {
-            const mems = await cmd("Mem");
-            if (mems) {
-                if (mems.Mem1) document.getElementById('t-on').value = mems.Mem1;
-                if (mems.Mem2) document.getElementById('t-off').value = mems.Mem2;
-                if (mems.Mem3) document.getElementById('t-limit').value = mems.Mem3;
-                if (mems.Mem4) document.getElementById('t-delay').value = mems.Mem4;
+            const res = await cmd("Status 1");
+            if (res && res.StatusPRM) {
+                if (res.StatusPRM.Mem1) document.getElementById('t-on').value = res.StatusPRM.Mem1;
+                if (res.StatusPRM.Mem2) document.getElementById('t-off').value = res.StatusPRM.Mem2;
+                if (res.StatusPRM.Mem3) document.getElementById('t-limit').value = res.StatusPRM.Mem3;
+                if (res.StatusPRM.Mem4) document.getElementById('t-delay').value = res.StatusPRM.Mem4;
                 updateCycleStats();
             }
         }
 
         async function update() {
-            const [s8, s0, v1, v2] = await Promise.all([
-                cmd("Status 8"),
-                cmd("Status 0"),
-                cmd("Var1"),
-                cmd("Var2")
-            ]);
+            const now = Date.now();
 
-            if (!s8 || !s0) return;
+            // High freq polling
+            const hRes = await cmd("Backlog Status 8; Status 11");
+            if (!hRes || !hRes.StatusSNS || !hRes.StatusSTS) return;
 
-            const rawP = s8.StatusSNS.ENERGY.Power;
-            const rawV = s8.StatusSNS.ENERGY.Voltage;
-            const rawA = s8.StatusSNS.ENERGY.Current;
+            const rawP = hRes.StatusSNS.ENERGY.Power;
+            const rawV = hRes.StatusSNS.ENERGY.Voltage;
+            const rawA = hRes.StatusSNS.ENERGY.Current;
+            const load = hRes.StatusSTS.LoadAvg || 0;
+            const isRelayOn = (hRes.StatusSTS.POWER1 === "ON" || hRes.StatusSTS.POWER1 === 1);
+            const isLoopOn = (hRes.StatusSTS.POWER3 === "ON" || hRes.StatusSTS.POWER3 === 1);
+
+            // Low freq polling (Var1 and Var2)
+            if (now - lastLowFreqTs > 4000) {
+                const lf = await cmd("Status 4");
+                lastLowFreqTs = now;
+                if (lf && lf.StatusMEM) {
+                    if (lf.StatusMEM.Var1 === "" || lf.StatusMEM.Var2 === "") {
+                        await cmd("Backlog Var1 0; Var2 0");
+                        tasmotaCyc = 0;
+                        tasmotaPeak = 0;
+                    } else {
+                        tasmotaCyc = parseFloat(lf.StatusMEM.Var1 || 0);
+                        tasmotaPeak = parseFloat(lf.StatusMEM.Var2 || 0);
+                    }
+                }
+            }
 
             // Update precisions from hardware
             pPrec = getPrec(rawP);
@@ -661,19 +682,12 @@
             const p = parseFloat(rawP || 0);
             const v = parseFloat(rawV || 0);
             const a = parseFloat(rawA || 0);
-            const c = v1 ? parseFloat(v1.Var1 || 0) : 0;
-            const peak = v2 ? parseFloat(v2.Var2 || 0) : 0;
 
             // Momentant UI
             document.getElementById('v-now').innerText = v.toFixed(vPrec) + "V";
             document.getElementById('a-now').innerText = a.toFixed(aPrec) + "A";
             document.getElementById('p-now').innerText = p.toFixed(pPrec) + "W";
-            document.getElementById('cyc').innerText = Math.round(c);
-
-            // Sync toggles and lamp from Tasmota state
-            const isRelayOn = (s0.StatusSTS.POWER1 === "ON");
-            const isLoopOn = (s0.StatusSTS.POWER3 === "ON");
-            const now = Date.now();
+            document.getElementById('cyc').innerText = Math.round(tasmotaCyc);
 
             // Track cycle run times
             if (isLoopOn && !lastLoopState) {
@@ -695,17 +709,19 @@
 
             // Auto-stop logic
             const stopCount = parseInt(document.getElementById('t-stop-cyc').value) || 0;
-            if (isLoopOn && stopCount > 0 && c >= stopCount) {
+            if (isLoopOn && stopCount > 0 && tasmotaCyc >= stopCount) {
                 cmd("Power3 0");
             }
 
             // Sync estimates
             updateCycleStats();
 
-            // Only sync LOOP UI if not recently toggled manually
-            // Manual switch is now purely local-to-UI until user clicks it
+            // Only sync toggles if not recently toggled manually
             if (now - lastLoopToggle > LOCK_TIME) {
                 document.getElementById('loop-sw').checked = isLoopOn;
+            }
+            if (now - lastManualToggle > LOCK_TIME) {
+                document.getElementById('manual-sw').checked = isRelayOn;
             }
 
             document.getElementById('relay-lamp').classList.toggle('active', isRelayOn);
@@ -745,7 +761,7 @@
                     curRun = { v: [], a: [], p: [] };
                 }
 
-                calc(peak);
+                calc(tasmotaPeak);
             } else if (curRun.p.length > 0) {
                 // Handle run ending when period ends
                 const rs = {
@@ -757,14 +773,23 @@
                 runs.push(rs);
                 lastRun = rs;
                 curRun = { v: [], a: [], p: [] };
-                calc(peak);
+                calc(tasmotaPeak);
             }
 
-            // Determine next poll interval based on LoadAvg
-            let nextDelay = 1000;
-            const load = s0.StatusSTS.LoadAvg || 0;
-            if (load > 100) nextDelay = 5000;
-            else if (load > 60) nextDelay = 2000;
+            // Adaptive Logic (Load Safety)
+            let nextDelay = 1500;
+            const warnEl = document.getElementById('load-warn');
+
+            if (load > 150) {
+                nextDelay = 10000;
+                if (warnEl) warnEl.innerText = "- VARNING: Hög belastning på pluggen, pausar...";
+            } else if (load > 100) {
+                nextDelay = 5000;
+                if (warnEl) warnEl.innerText = "";
+            } else {
+                nextDelay = 1500;
+                if (warnEl) warnEl.innerText = "";
+            }
 
             setTimeout(update, nextDelay);
         }
@@ -812,19 +837,14 @@
         }
 
         async function toggleManual() {
+            lastManualToggle = Date.now();
             const isOn = document.getElementById('manual-sw').checked;
             await cmd("Power1 " + (isOn ? "1" : "0"));
         }
 
         async function toggleLoop() {
             lastLoopToggle = Date.now();
-            if (document.getElementById('loop-sw').checked) {
-                const on = document.getElementById('t-on').value;
-                const off = document.getElementById('t-off').value;
-                await cmd(`Backlog Mem1 ${on}; Mem2 ${off}; Power3 1`);
-            } else {
-                await cmd("Power3 0");
-            }
+            await cmd("Power3 2");
         }
 
         async function updateSecurityRule() {
@@ -843,7 +863,7 @@
 
         async function resetStats() {
             if (confirm("Vill du nollställa alla räknare och el-data i pluggen?")) {
-                await cmd("Power2 ON");
+                await cmd("Power2 1");
                 p_pts = []; v_pts = []; a_pts = []; logs = [];
                 runs = []; curRun = { v: [], a: [], p: [] }; lastRun = null;
 
