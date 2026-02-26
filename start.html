@@ -632,14 +632,14 @@
 
         async function cmd(c) { try { return await (await fetch(api + encodeURIComponent(c))).json(); } catch (e) { return null; } }
 
-        // Initial Load: Load Mem values from Tasmota using Status 1
+        // Initial Load: Load Mem values from Tasmota
         async function loadSettings() {
-            const res = await cmd("Status 1");
-            if (res && res.StatusPRM) {
-                if (res.StatusPRM.Mem1) document.getElementById('t-on').value = res.StatusPRM.Mem1;
-                if (res.StatusPRM.Mem2) document.getElementById('t-off').value = res.StatusPRM.Mem2;
-                if (res.StatusPRM.Mem3) document.getElementById('t-limit').value = res.StatusPRM.Mem3;
-                if (res.StatusPRM.Mem4) document.getElementById('t-delay').value = res.StatusPRM.Mem4;
+            const mems = await cmd("Mem");
+            if (mems) {
+                if (mems.Mem1) document.getElementById('t-on').value = mems.Mem1;
+                if (mems.Mem2) document.getElementById('t-off').value = mems.Mem2;
+                if (mems.Mem3) document.getElementById('t-limit').value = mems.Mem3;
+                if (mems.Mem4) document.getElementById('t-delay').value = mems.Mem4;
                 updateCycleStats();
             }
         }
@@ -648,52 +648,40 @@
             const now = Date.now();
 
             // High freq polling
-            const hRes = await cmd("Backlog Status 8; Status 11");
-            if (!hRes || !Array.isArray(hRes) || hRes.length < 2 || !hRes[0].StatusSNS || !hRes[1].StatusSTS) {
+            const [s8, s11] = await Promise.all([
+                cmd("Status 8"),
+                cmd("Status 11")
+            ]);
+
+            if (!s8 || !s11 || !s8.StatusSNS || !s11.StatusSTS) {
                 setTimeout(update, 2000);
                 return;
             }
 
-            const rawP = hRes[0].StatusSNS.ENERGY.Power;
-            const rawV = hRes[0].StatusSNS.ENERGY.Voltage;
-            const rawA = hRes[0].StatusSNS.ENERGY.Current;
-            const load = hRes[1].StatusSTS.LoadAvg || 0;
-            const isRelayOn = (hRes[1].StatusSTS.POWER1 === "ON" || hRes[1].StatusSTS.POWER1 === 1);
-            const isLoopOn = (hRes[1].StatusSTS.POWER3 === "ON" || hRes[1].StatusSTS.POWER3 === 1);
+            const rawP = s8.StatusSNS.ENERGY.Power;
+            const rawV = s8.StatusSNS.ENERGY.Voltage;
+            const rawA = s8.StatusSNS.ENERGY.Current;
+            const load = s11.StatusSTS.LoadAvg || 0;
+            const isRelayOn = (s11.StatusSTS.POWER1 === "ON" || s11.StatusSTS.POWER1 === 1);
+            const isLoopOn = (s11.StatusSTS.POWER3 === "ON" || s11.StatusSTS.POWER3 === 1);
 
             // Low freq polling (Var1 and Var2)
             if (now - lastLowFreqTs > 4000) {
-                const lf = await cmd("Backlog Var1; Var2");
+                const [v1Res, v2Res] = await Promise.all([
+                    cmd("Var1"),
+                    cmd("Var2")
+                ]);
                 lastLowFreqTs = now;
 
-                // Backlog returns an array of results: [{"Var1":"..."}, {"Var2":"..."}]
-                // Let's protect against empty formats
-                if (lf && Array.isArray(lf) && lf.length >= 2) {
-                    const var1Val = lf[0].Var1;
-                    const var2Val = lf[1].Var2;
-
-                    if (var1Val === "" || var2Val === "") {
+                if (v1Res && v2Res) {
+                    if (v1Res.Var1 === "" || v2Res.Var2 === "") {
                         // Endast vid cold boot null-strängar
                         await cmd("Backlog Var1 0; Var2 0");
                         tasmotaCyc = 0;
                         tasmotaPeak = 0;
                     } else {
-                        tasmotaCyc = parseFloat(var1Val || 0);
-                        tasmotaPeak = parseFloat(var2Val || 0);
-                    }
-                } else if (lf && lf.Var1 !== undefined) {
-                    // Fallback if not returned as array for some reason
-                    if (lf.Var1 === "") {
-                        await cmd("Var1 0");
-                        tasmotaCyc = 0;
-                    } else {
-                        tasmotaCyc = parseFloat(lf.Var1 || 0);
-                    }
-                    if (lf.Var2 === "") {
-                        await cmd("Var2 0");
-                        tasmotaPeak = 0;
-                    } else {
-                        tasmotaPeak = parseFloat(lf.Var2 || 0);
+                        tasmotaCyc = parseFloat(v1Res.Var1 || 0);
+                        tasmotaPeak = parseFloat(v2Res.Var2 || 0);
                     }
                 }
             }
