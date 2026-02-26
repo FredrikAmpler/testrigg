@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Borrtest Rig Pro</title>
+    <title>Amplified Testrigg</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -16,28 +16,83 @@
             --success: #10b981;
         }
 
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Inter', -apple-system, system-ui, sans-serif;
-            background: #0f172a;
+            background: radial-gradient(circle at top right, #1e293b, #0f172a);
             color: var(--text);
             margin: 0;
             padding: 20px;
+            min-height: 100vh;
         }
 
         .container {
-            max-width: 900px;
+            width: 100%;
+            max-width: 950px;
             margin: 0 auto;
+        }
+
+        header,
+        .card,
+        .panel,
+        .chart-box {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
         }
 
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px;
+            padding: 12px 20px;
             background: var(--card-bg);
             border-radius: 16px;
             margin-bottom: 25px;
             border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .lamp-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 8px 16px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(8px);
+        }
+
+        .lamp-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #94a3b8;
+            font-weight: 700;
+        }
+
+        .lamp {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #1e293b;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .lamp.active {
+            background: #10b981;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.8), inset 0 0 8px rgba(255, 255, 255, 0.5);
+            border-color: #34d399;
         }
 
         .stats-layout {
@@ -79,7 +134,7 @@
 
         .agg-table {
             display: grid;
-            grid-template-columns: 40px 1fr 1fr 1fr;
+            grid-template-columns: 55px 1fr 1fr 1fr 1fr;
             text-align: center;
             align-items: center;
         }
@@ -204,8 +259,8 @@
         }
 
         input[type="number"] {
-            width: 50px;
-            background: transparent;
+            width: 60px;
+            background: rgba(255, 255, 255, 0.05);
             border: none;
             border-bottom: 2px solid var(--primary);
             color: white;
@@ -213,6 +268,8 @@
             font-weight: bold;
             text-align: center;
             outline: none;
+            border-radius: 4px 4px 0 0;
+            padding: 4px 0;
         }
 
         .btn {
@@ -239,24 +296,137 @@
             height: 350px;
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
+
+        /* Responsive Design */
+        @media (max-width: 850px) {
+            .stats-layout {
+                grid-template-columns: 1.2fr 1.8fr;
+            }
+
+            .stats-layout .card:last-child {
+                grid-column: span 2;
+                flex-direction: row;
+                align-items: center;
+                gap: 20px;
+            }
+
+            .stats-layout .card:last-child .value-large {
+                margin: 0;
+            }
+        }
+
+        @media (max-width: 650px) {
+            body {
+                padding: 10px;
+            }
+
+            header {
+                padding: 10px 15px;
+                flex-direction: row;
+                justify-content: space-between;
+            }
+
+            .header-right {
+                width: auto;
+                justify-content: center;
+                margin-top: 0;
+            }
+
+            .lamp-container {
+                position: static;
+                padding: 6px 14px;
+            }
+
+            .stats-layout {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .stats-layout .card:last-child {
+                grid-column: span 1;
+                flex-direction: column;
+                padding: 20px;
+                align-items: center;
+            }
+
+            .panel {
+                padding: 15px;
+            }
+
+            .control-row {
+                padding: 12px 10px;
+                margin-bottom: 12px;
+            }
+
+            .switch-label {
+                font-size: 0.85rem;
+            }
+
+            .time-inputs {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+
+            .time-inputs div {
+                padding: 10px 5px;
+            }
+
+            input[type="number"] {
+                width: 100%;
+                max-width: 70px;
+                font-size: 1rem;
+            }
+
+            .main {
+                grid-template-columns: 1fr;
+            }
+
+            .value-large {
+                font-size: 2.5rem;
+                margin: 10px 0;
+            }
+
+            .agg-table {
+                font-size: 0.8rem;
+                grid-template-columns: 50px 1fr 1fr 1fr 1fr;
+            }
+
+            .agg-v {
+                font-size: 0.95rem;
+                padding: 8px 0;
+            }
+
+            .btn {
+                padding: 15px;
+                font-size: 0.9rem;
+            }
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
         <header>
-            <h1>Borrtest <span style="color:var(--primary)">Rig</span></h1>
-            <div id="status" style="font-size: 0.8rem; color: #64748b;">Ansluter...</div>
+            <h1 style="margin:0; font-size: 1.3rem;">Amplified <span style="color:var(--primary)">testrigg</span></h1>
+            <div class="header-right">
+                <div class="lamp-container">
+                    <span class="lamp-label">Relä</span>
+                    <div id="relay-lamp" class="lamp"></div>
+                </div>
+            </div>
         </header>
 
         <div class="stats-layout">
             <!-- Momentant -->
             <div class="card">
                 <h3>Momentant</h3>
-                <div style="margin-top: 25px;">
+                <div>
+                    <!-- Placeholder to align with Aggregerat headers -->
+                    <div class="agg-h">&nbsp;</div>
                     <div class="stats-row-val"><span class="agg-label">V</span> <b id="v-now">-</b></div>
                     <div class="stats-row-val"><span class="agg-label">A</span> <b id="a-now">-</b></div>
                     <div class="stats-row-val"><span class="agg-label">W</span> <b id="p-now">-</b></div>
+                    <div class="stats-row-val"><span class="agg-label">&nbsp;</span> <b>&nbsp;</b></div>
                 </div>
             </div>
 
@@ -265,24 +435,34 @@
                 <h3>Aggregerat i perioden</h3>
                 <div class="agg-table">
                     <div class="agg-h"></div>
+                    <div class="agg-h">Senaste</div>
                     <div class="agg-h">Max</div>
                     <div class="agg-h">Medel</div>
                     <div class="agg-h">Median</div>
 
                     <div class="agg-label">V</div>
+                    <div id="v-last" class="agg-v">-</div>
                     <div id="v-max" class="agg-v">-</div>
                     <div id="v-avg" class="agg-v">-</div>
                     <div id="v-med" class="agg-v">-</div>
 
                     <div class="agg-label">A</div>
+                    <div id="a-last" class="agg-v">-</div>
                     <div id="a-max" class="agg-v">-</div>
                     <div id="a-avg" class="agg-v">-</div>
                     <div id="a-med" class="agg-v">-</div>
 
                     <div class="agg-label">W</div>
+                    <div id="p-last" class="agg-v">-</div>
                     <div id="p-max" class="agg-v">-</div>
                     <div id="p-avg" class="agg-v">-</div>
                     <div id="p-med" class="agg-v">-</div>
+
+                    <div class="agg-label">J</div>
+                    <div id="e-last" class="agg-v">-</div>
+                    <div id="e-max" class="agg-v">-</div>
+                    <div id="e-avg" class="agg-v">-</div>
+                    <div id="e-med" class="agg-v">-</div>
                 </div>
             </div>
 
@@ -290,6 +470,12 @@
             <div class="card">
                 <h3>Cykler</h3>
                 <div id="cyc" class="value-large">0</div>
+                <div
+                    style="font-size: 0.75rem; color: #94a3b8; margin-top: 12px; display: flex; flex-direction: column; gap: 4px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px;">
+                    <div>Start: <b id="cyc-start" style="color:var(--text)">-</b></div>
+                    <div>Stopp: <b id="cyc-stop" style="color:var(--text)">-</b></div>
+                    <div style="margin-top: 4px;">Aktiv körtid: <b id="cyc-run" style="color:var(--text)">-</b></div>
+                </div>
             </div>
         </div>
 
@@ -310,13 +496,63 @@
                 </div>
 
                 <div class="time-inputs">
-                    <div><small>Kör (s)</small><br><input type="number" id="t-on" value="10"></div>
-                    <div><small>Vila (s)</small><br><input type="number" id="t-off" value="2"></div>
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
+                        <small>Kör (s)</small>
+                        <input type="number" id="t-on" value="10" oninput="updateCycleStats()">
+                        <div
+                            style="text-align: left; align-self: stretch; margin-top: 5px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 5px;">
+                            <small style="color:#94a3b8; font-size: 0.65rem; display: block;">Cykler/h: <b id="c-ph"
+                                    style="color:var(--primary)">-</b></small>
+                            <small style="color:#94a3b8; font-size: 0.65rem; display: block;">Körtid/h: <b id="rt-ph"
+                                    style="color:var(--text)">-</b></small>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
+                        <small>Vila (s)</small>
+                        <input type="number" id="t-off" value="2" oninput="updateCycleStats()">
+                        <div
+                            style="text-align: left; align-self: stretch; margin-top: 5px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 5px;">
+                            <small style="color:#94a3b8; font-size: 0.65rem; display: block;">Cykler/dag: <b id="c-pd"
+                                    style="color:var(--primary)">-</b></small>
+                            <small style="color:#94a3b8; font-size: 0.65rem; display: block;">Körtid/dag: <b id="rt-pd"
+                                    style="color:var(--text)">-</b></small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-row"
+                    style="flex-direction: column; align-items: stretch; gap: 10px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 15px;">
+                        <div style="flex: 1;">
+                            <small style="display: block; margin-bottom: 5px;">Stopp efter antal cykler</small>
+                            <input type="number" id="t-stop-cyc" placeholder="-" oninput="updateCycleStats()"
+                                style="width: 100%; max-width: none;">
+                        </div>
+                        <div
+                            style="flex: 1.5; text-align: left; background: rgba(0,0,0,0.1); padding: 8px; border-radius: 8px; min-height: 60px;">
+                            <small style="color:#94a3b8; font-size: 0.65rem; display: block;">Total tid: <b
+                                    id="total-dur" style="color:var(--text)">-</b></small>
+                            <small style="color:#94a3b8; font-size: 0.65rem; display: block;">Klar kl: <b id="total-eta"
+                                    style="color:var(--primary)">-</b></small>
+                            <small style="color:#94a3b8; font-size: 0.65rem; display: block;">Total körtid: <b
+                                    id="total-run" style="color:var(--text)">-</b></small>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="time-inputs">
-                    <div><small>Stoppgräns (W)</small><br><input type="number" id="t-limit" value="1000"></div>
-                    <div><small>Tröghet (s)</small><br><input type="number" id="t-delay" value="1"></div>
+                    <div>
+                        <small>Stoppgräns (W)</small><br>
+                        <input type="number" id="t-limit" value="1000" onchange="updateSecurityRule()">
+                        <div style="margin-top:2px"><small style="color:#94a3b8; font-size: 0.65rem;">Rek +25%</small>
+                        </div>
+                    </div>
+                    <div>
+                        <small>Tröghet (s)</small><br>
+                        <input type="number" id="t-delay" value="1" onchange="cmd('Mem4 ' + this.value)">
+                        <div style="margin-top:2px"><small style="color:#94a3b8; font-size: 0.65rem;">Rek 3 sek</small>
+                        </div>
+                    </div>
                 </div>
 
                 <button class="btn" onclick="resetStats()">Nollställ räknare</button>
@@ -327,7 +563,63 @@
 
     <script>
         let chart, p_pts = [], v_pts = [], a_pts = [], logs = [];
+        let runs = [], curRun = { v: [], a: [], p: [] }, lastRun = null;
         const api = "/cm?cmnd=";
+        let lastManualToggle = 0;
+        let lastLoopToggle = 0;
+        const LOCK_TIME = 2000;
+        let vPrec = 0, aPrec = 1, pPrec = 1;
+        let loopStartTime = null, loopStopTime = null, activeTimeSec = 0, lastLoopState = false, lastUpdateTs = Date.now();
+
+        function formatTimeHM(sec) {
+            const h = Math.floor(sec / 3600);
+            const m = Math.floor((sec % 3600) / 60);
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} h`;
+        }
+
+        function updateCycleStats() {
+            const ton = parseFloat(document.getElementById('t-on').value) || 0;
+            const toff = parseFloat(document.getElementById('t-off').value) || 0;
+            const stopCyc = parseInt(document.getElementById('t-stop-cyc').value) || 0;
+            const tcycle = ton + toff;
+            if (tcycle > 0) {
+                document.getElementById('c-ph').innerText = Math.round(3600 / tcycle);
+                document.getElementById('c-pd').innerText = Math.round(86400 / tcycle);
+                document.getElementById('rt-ph').innerText = formatTimeHM(3600 * (ton / tcycle));
+                document.getElementById('rt-pd').innerText = formatTimeHM(86400 * (ton / tcycle));
+
+                if (stopCyc > 0) {
+                    const totalSec = stopCyc * tcycle;
+                    const runSec = stopCyc * ton;
+                    document.getElementById('total-dur').innerText = formatTimeHM(totalSec);
+                    document.getElementById('total-run').innerText = formatTimeHM(runSec);
+
+                    if (loopStartTime) {
+                        const eta = new Date(loopStartTime.getTime() + (totalSec * 1000));
+                        document.getElementById('total-eta').innerText = eta.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    } else {
+                        document.getElementById('total-eta').innerText = "-";
+                    }
+                } else {
+                    document.getElementById('total-dur').innerText = "-";
+                    document.getElementById('total-eta').innerText = "-";
+                    document.getElementById('total-run').innerText = "-";
+                }
+            }
+        }
+
+        function getPrec(val) {
+            if (val === undefined || val === null) return 1;
+            const s = val.toString();
+            const dot = s.indexOf('.');
+            return dot === -1 ? 0 : s.length - dot - 1;
+        }
+
+        function formatEnergy(j) {
+            if (!j && j !== 0) return "-";
+            if (j < 3600) return `<span>${Math.round(j)}</span><small style="font-size:0.6rem;margin-left:2px">js</small>`;
+            return `<span>${(j / 3600000).toFixed(4)}</span><small style="font-size:0.6rem;margin-left:2px">kwh</small>`;
+        }
 
         function initChart() {
             const ctx = document.getElementById('mainChart').getContext('2d');
@@ -348,6 +640,7 @@
                 if (mems.Mem2) document.getElementById('t-off').value = mems.Mem2;
                 if (mems.Mem3) document.getElementById('t-limit').value = mems.Mem3;
                 if (mems.Mem4) document.getElementById('t-delay').value = mems.Mem4;
+                updateCycleStats();
             }
         }
 
@@ -361,37 +654,122 @@
 
             if (!s8 || !s0) return;
 
-            const p = parseFloat(s8.StatusSNS.ENERGY.Power || 0);
-            const v = parseFloat(s8.StatusSNS.ENERGY.Voltage || 0);
-            const a = parseFloat(s8.StatusSNS.ENERGY.Current || 0);
+            const rawP = s8.StatusSNS.ENERGY.Power;
+            const rawV = s8.StatusSNS.ENERGY.Voltage;
+            const rawA = s8.StatusSNS.ENERGY.Current;
+
+            // Update precisions from hardware
+            pPrec = getPrec(rawP);
+            vPrec = getPrec(rawV);
+            aPrec = getPrec(rawA);
+
+            const p = parseFloat(rawP || 0);
+            const v = parseFloat(rawV || 0);
+            const a = parseFloat(rawA || 0);
             const c = v1 ? parseFloat(v1.Var1 || 0) : 0;
             const peak = v2 ? parseFloat(v2.Var2 || 0) : 0;
 
             // Momentant UI
-            document.getElementById('v-now').innerText = v.toFixed(1) + "V";
-            document.getElementById('a-now').innerText = a.toFixed(3) + "A";
-            document.getElementById('p-now').innerText = p.toFixed(2) + "W";
+            document.getElementById('v-now').innerText = v.toFixed(vPrec) + "V";
+            document.getElementById('a-now').innerText = a.toFixed(aPrec) + "A";
+            document.getElementById('p-now').innerText = p.toFixed(pPrec) + "W";
             document.getElementById('cyc').innerText = Math.round(c);
 
-            // Sync toggles from Tasmota state
-            document.getElementById('manual-sw').checked = (s0.StatusSTS.POWER1 === "ON");
-            document.getElementById('loop-sw').checked = (s0.StatusSTS.POWER3 === "ON");
-            document.getElementById('status').innerText = "Uppdaterad: " + new Date().toLocaleTimeString();
+            // Sync toggles and lamp from Tasmota state
+            const isRelayOn = (s0.StatusSTS.POWER1 === "ON");
+            const isLoopOn = (s0.StatusSTS.POWER3 === "ON");
+            const now = Date.now();
+
+            // Track cycle run times
+            if (isLoopOn && !lastLoopState) {
+                loopStartTime = new Date();
+                loopStopTime = null;
+                activeTimeSec = 0;
+            } else if (!isLoopOn && lastLoopState) {
+                loopStopTime = new Date();
+            }
+            if (isLoopOn && p > 10) {
+                activeTimeSec += (now - lastUpdateTs) / 1000;
+            }
+            lastLoopState = isLoopOn;
+            lastUpdateTs = now;
+
+            if (loopStartTime) document.getElementById('cyc-start').innerText = loopStartTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            if (loopStopTime) document.getElementById('cyc-stop').innerText = loopStopTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('cyc-run').innerText = formatTimeHM(activeTimeSec);
+
+            // Auto-stop logic
+            const stopCount = parseInt(document.getElementById('t-stop-cyc').value) || 0;
+            if (isLoopOn && stopCount > 0 && c >= stopCount) {
+                cmd("Power3 0");
+            }
+
+            // Sync estimates
+            updateCycleStats();
+
+            // Only sync LOOP UI if not recently toggled manually
+            // Manual switch is now purely local-to-UI until user clicks it
+            if (now - lastLoopToggle > LOCK_TIME) {
+                document.getElementById('loop-sw').checked = isLoopOn;
+            }
+
+            document.getElementById('relay-lamp').classList.toggle('active', isRelayOn);
 
             // Store logs for stats and CSV
-            const isLooping = s0.StatusSTS.POWER3 === "ON";
+            const isLooping = isLoopOn;
             if (p > 1 || isLooping) {
                 const now = new Date();
                 logs.push({ t: now.toLocaleTimeString(), ts: now.toISOString(), v, a, p });
                 p_pts.push(p); v_pts.push(v); a_pts.push(a);
 
-                if (chart) {
-                    chart.data.labels.push(""); chart.data.datasets[0].data.push(p);
-                    if (chart.data.labels.length > 100) { chart.data.labels.shift(); chart.data.datasets[0].data.shift(); }
-                    chart.update('none');
+                // Track current run
+                if (p > 1) {
+                    curRun.v.push(v); curRun.a.push(a); curRun.p.push(p);
+                } else if (curRun.p.length > 0) {
+                    // Run just ended
+                    const rs = {
+                        v: getStats(curRun.v).med,
+                        a: getStats(curRun.a).med,
+                        p: getStats(curRun.p).med,
+                        e: curRun.p.reduce((sum, val) => sum + val, 0) // Sum of W per sec = Js
+                    };
+                    runs.push(rs);
+                    lastRun = rs;
+                    curRun = { v: [], a: [], p: [] };
                 }
+
+                calc(peak);
+            } else if (curRun.p.length > 0) {
+                // Handle run ending when power drops but we were in a run
+                const rs = {
+                    v: getStats(curRun.v).med,
+                    a: getStats(curRun.a).med,
+                    p: getStats(curRun.p).med,
+                    e: curRun.p.reduce((sum, val) => sum + val, 0)
+                };
+                runs.push(rs);
+                lastRun = rs;
+                curRun = { v: [], a: [], p: [] };
                 calc(peak);
             }
+
+            if (chart) {
+                chart.data.labels.push("");
+                chart.data.datasets[0].data.push(p);
+                if (chart.data.labels.length > 100) {
+                    chart.data.labels.shift();
+                    chart.data.datasets[0].data.shift();
+                }
+                chart.update('none');
+            }
+
+            // Determine next poll interval based on LoadAvg
+            let nextDelay = 1000;
+            const load = s0.StatusSTS.LoadAvg || 0;
+            if (load > 100) nextDelay = 5000;
+            else if (load > 60) nextDelay = 2000;
+
+            setTimeout(update, nextDelay);
         }
 
         function getStats(arr) {
@@ -407,47 +785,88 @@
             const ps = getStats(p_pts);
             const vs = getStats(v_pts);
             const as = getStats(a_pts);
+            const es = getStats(runs.map(r => r.e));
 
             const displayPeak = Math.max(tasmotaPeak, ps.max);
 
-            document.getElementById('p-max').innerText = displayPeak.toFixed(2) + "W";
-            document.getElementById('p-avg').innerText = ps.avg.toFixed(1) + "W";
-            document.getElementById('p-med').innerText = ps.med.toFixed(1) + "W";
+            // Latest Run
+            document.getElementById('v-last').innerText = lastRun ? lastRun.v.toFixed(vPrec) + "V" : "-";
+            document.getElementById('a-last').innerText = lastRun ? lastRun.a.toFixed(aPrec) + "A" : "-";
+            document.getElementById('p-last').innerText = lastRun ? lastRun.p.toFixed(pPrec) + "W" : "-";
+            document.getElementById('e-last').innerHTML = lastRun ? formatEnergy(lastRun.e) : "-";
 
-            document.getElementById('v-max').innerText = vs.max.toFixed(1) + "V";
-            document.getElementById('v-avg').innerText = vs.avg.toFixed(1) + "V";
-            document.getElementById('v-med').innerText = vs.med.toFixed(1) + "V";
+            // Session Stats
+            document.getElementById('p-max').innerText = displayPeak.toFixed(pPrec) + "W";
+            document.getElementById('p-avg').innerText = ps.avg.toFixed(pPrec) + "W";
+            document.getElementById('p-med').innerText = ps.med.toFixed(pPrec) + "W";
 
-            document.getElementById('a-max').innerText = as.max.toFixed(3) + "A";
-            document.getElementById('a-avg').innerText = as.avg.toFixed(3) + "A";
-            document.getElementById('a-med').innerText = as.med.toFixed(3) + "A";
+            document.getElementById('v-max').innerText = vs.max.toFixed(vPrec) + "V";
+            document.getElementById('v-avg').innerText = vs.avg.toFixed(vPrec) + "V";
+            document.getElementById('v-med').innerText = vs.med.toFixed(vPrec) + "V";
+
+            document.getElementById('a-max').innerText = as.max.toFixed(aPrec) + "A";
+            document.getElementById('a-avg').innerText = as.avg.toFixed(aPrec) + "A";
+            document.getElementById('a-med').innerText = as.med.toFixed(aPrec) + "A";
+
+            // Energy Stats
+            document.getElementById('e-max').innerHTML = formatEnergy(es.max);
+            document.getElementById('e-avg').innerHTML = formatEnergy(es.avg);
+            document.getElementById('e-med').innerHTML = formatEnergy(es.med);
         }
 
         async function toggleManual() {
-            await cmd("Power1 TOGGLE");
+            const isOn = document.getElementById('manual-sw').checked;
+            await cmd("Power1 " + (isOn ? "1" : "0"));
         }
 
         async function toggleLoop() {
+            lastLoopToggle = Date.now();
             if (document.getElementById('loop-sw').checked) {
                 const on = document.getElementById('t-on').value;
                 const off = document.getElementById('t-off').value;
-                const limit = document.getElementById('t-limit').value;
-                const delay = document.getElementById('t-delay').value;
-                await cmd(`Backlog Mem1 ${on}; Mem2 ${off}; Mem3 ${limit}; Mem4 ${delay}; Power3 1`);
+                await cmd(`Backlog Mem1 ${on}; Mem2 ${off}; Power3 1`);
             } else {
                 await cmd("Power3 0");
             }
+        }
+
+        async function updateSecurityRule() {
+            const maxW = document.getElementById('t-limit').value;
+
+            // 1. Save to Mem3 for UI persistence
+            await cmd("Mem3 " + maxW);
+
+            // 2. Rewrite Rule 3 with the new hardcoded limit
+            const ruleCmd = `Rule3 ON Energy#Power>${maxW} DO RuleTimer3 %mem4% ENDON ON Energy#Power<=${maxW} DO RuleTimer3 0 ENDON ON Rules#Timer=3 DO Backlog Power3 0; Power1 0 ENDON`;
+            await cmd(ruleCmd);
+
+            // 3. Activate Rule 3 in One-Shot mode (5)
+            await cmd("Rule3 5");
         }
 
         async function resetStats() {
             if (confirm("Vill du nollställa alla räknare och el-data i pluggen?")) {
                 await cmd("Power2 ON");
                 p_pts = []; v_pts = []; a_pts = []; logs = [];
+                runs = []; curRun = { v: [], a: [], p: [] }; lastRun = null;
+
                 if (chart) {
                     chart.data.labels = [];
                     chart.data.datasets[0].data = [];
                     chart.update();
                 }
+
+                // Trigger an immediate UI recalibration with 0 values
+                calc(0);
+
+                // Force immediate clear of momentary display if no active data
+                document.getElementById('cyc').innerText = "0";
+                loopStartTime = null;
+                loopStopTime = null;
+                activeTimeSec = 0;
+                document.getElementById('cyc-start').innerText = "-";
+                document.getElementById('cyc-stop').innerText = "-";
+                document.getElementById('cyc-run').innerText = "-";
             }
         }
 
@@ -463,8 +882,9 @@
         }
 
         initChart();
+        updateCycleStats();
         loadSettings();
-        setInterval(update, 1000);
+        update(); // Start the dynamic polling loop
     </script>
 </body>
 
