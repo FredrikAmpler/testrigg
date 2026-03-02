@@ -865,16 +865,15 @@
         async function updateSecurityRule() {
             const maxW = document.getElementById('t-limit').value;
 
-            // 1. Spara inställningen i Mem3 för UI persistence
+            // 1. Spara inställningen i Mem3
             await cmd("Mem3 " + maxW);
 
-            // 2. Bygg den kompletta Rule3: Cykelräknare (direkt nollställning) + Peak-mätare + Motorskydd
-            // OBS: Denna sträng måste vara exakt så här för att inte krocka internt i Tasmota.
-            const ruleCmd = `Rule3 ON Energy#Power>10 DO IF (Var4==0) Backlog Var4 1;Add1 1 ENDIF ENDON ON Energy#Power<5 DO Var4 0 ENDON ON Energy#Power>0 DO IF (%value%>%var2%) Var2 %value% ENDIF ENDON ON Energy#Power>${maxW} DO RuleTimer3 %mem4% ENDON ON Energy#Power<=${maxW} DO RuleTimer3 0 ENDON ON Rules#Timer=3 DO Backlog Power3 0; Power1 0 ENDON`;
+            // 2. Bygg ENBART motorskyddet i Rule 3 (så vi inte raderar cykelräknaren i Rule 2)
+            const ruleCmd = `Rule3 ON Energy#Power>${maxW} DO RuleTimer3 %mem4% ENDON ON Energy#Power<=${maxW} DO RuleTimer3 0 ENDON ON Rules#Timer=3 DO Backlog Power3 0; Power1 0 ENDON`;
 
             await cmd(ruleCmd);
 
-            // 3. Aktivera Rule 3 i "Once"-läge (läge 5) - detta är absolut nödvändigt för cykelräknaren.
+            // 3. Aktivera Rule 3 i "Once"-läge (läge 5)
             await cmd("Rule3 5");
         }
 
