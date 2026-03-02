@@ -573,7 +573,6 @@
         let lastManualToggle = 0;
         let lastLoopToggle = 0;
         const LOCK_TIME = 2000;
-        let vPrec = 0, aPrec = 1, pPrec = 1;
         let loopStartTime = null, loopStopTime = null, activeTimeSec = 0, lastLoopState = false, lastUpdateTs = Date.now();
         let lastLowFreqTs = 0, tasmotaCyc = 0, tasmotaPeak = 0;
 
@@ -699,10 +698,9 @@
             const v = parseFloat(rawV || 0);
             const a = parseFloat(rawA || 0);
 
-            // Momentant UI
-            document.getElementById('v-now').innerText = v.toFixed(vPrec) + "V";
-            document.getElementById('a-now').innerText = a.toFixed(aPrec) + "A";
-            document.getElementById('p-now').innerText = p.toFixed(pPrec) + "W";
+            document.getElementById('v-now').innerText = v.toFixed(0) + "V";
+            document.getElementById('a-now').innerText = a.toFixed(1) + "A";
+            document.getElementById('p-now').innerText = p.toFixed(1) + "W";
             document.getElementById('cyc').innerText = Math.round(tasmotaCyc);
 
             // Track cycle run times
@@ -769,7 +767,8 @@
                         v: getStats(curRun.v).med,
                         a: getStats(curRun.a).med,
                         p: getStats(curRun.p).med,
-                        e: curRun.p.reduce((sum, val) => sum + val, 0) // Sum of W per sec = Js
+                        e: curRun.p.reduce((sum, val) => sum + val, 0),
+                        dt: curRun.p.length // Count ticks as seconds since interval is now 1s
                     };
                     runs.push(rs);
                     lastRun = rs;
@@ -783,7 +782,8 @@
                     v: getStats(curRun.v).med,
                     a: getStats(curRun.a).med,
                     p: getStats(curRun.p).med,
-                    e: curRun.p.reduce((sum, val) => sum + val, 0)
+                    e: curRun.p.reduce((sum, val) => sum + val, 0),
+                    dt: curRun.p.length
                 };
                 runs.push(rs);
                 lastRun = rs;
@@ -792,7 +792,7 @@
             }
 
             // Adaptive Logic (Load Safety)
-            let nextDelay = 1500;
+            let nextDelay = 1000;
             const warnEl = document.getElementById('load-warn');
 
             if (load > 150) {
@@ -802,7 +802,7 @@
                 nextDelay = 5000;
                 if (warnEl) warnEl.innerText = "";
             } else {
-                nextDelay = 1500;
+                nextDelay = 1000;
                 if (warnEl) warnEl.innerText = "";
             }
 
@@ -823,32 +823,40 @@
             const vs = getStats(v_pts);
             const as = getStats(a_pts);
             const es = getStats(runs.map(r => r.e));
+            const runDts = runs.map(r => r.dt);
+            const ts = getStats(runDts);
 
             const displayPeak = Math.max(tasmotaPeak, ps.max);
 
             // Latest Run
-            document.getElementById('v-last').innerText = lastRun ? lastRun.v.toFixed(vPrec) + "V" : "-";
-            document.getElementById('a-last').innerText = lastRun ? lastRun.a.toFixed(aPrec) + "A" : "-";
-            document.getElementById('p-last').innerText = lastRun ? lastRun.p.toFixed(pPrec) + "W" : "-";
+            document.getElementById('v-last').innerText = lastRun ? lastRun.v.toFixed(0) + "V" : "-";
+            document.getElementById('a-last').innerText = lastRun ? lastRun.a.toFixed(1) + "A" : "-";
+            document.getElementById('p-last').innerText = lastRun ? lastRun.p.toFixed(1) + "W" : "-";
             document.getElementById('e-last').innerHTML = lastRun ? formatEnergy(lastRun.e) : "-";
+            document.getElementById('t-last').innerText = lastRun ? lastRun.dt.toFixed(1) : "-";
 
             // Session Stats
-            document.getElementById('p-max').innerText = displayPeak.toFixed(pPrec) + "W";
-            document.getElementById('p-avg').innerText = ps.avg.toFixed(pPrec) + "W";
-            document.getElementById('p-med').innerText = ps.med.toFixed(pPrec) + "W";
+            document.getElementById('p-max').innerText = displayPeak.toFixed(1) + "W";
+            document.getElementById('p-avg').innerText = ps.avg.toFixed(1) + "W";
+            document.getElementById('p-med').innerText = ps.med.toFixed(1) + "W";
 
-            document.getElementById('v-max').innerText = vs.max.toFixed(vPrec) + "V";
-            document.getElementById('v-avg').innerText = vs.avg.toFixed(vPrec) + "V";
-            document.getElementById('v-med').innerText = vs.med.toFixed(vPrec) + "V";
+            document.getElementById('v-max').innerText = vs.max.toFixed(0) + "V";
+            document.getElementById('v-avg').innerText = vs.avg.toFixed(0) + "V";
+            document.getElementById('v-med').innerText = vs.med.toFixed(0) + "V";
 
-            document.getElementById('a-max').innerText = as.max.toFixed(aPrec) + "A";
-            document.getElementById('a-avg').innerText = as.avg.toFixed(aPrec) + "A";
-            document.getElementById('a-med').innerText = as.med.toFixed(aPrec) + "A";
+            document.getElementById('a-max').innerText = as.max.toFixed(1) + "A";
+            document.getElementById('a-avg').innerText = as.avg.toFixed(1) + "A";
+            document.getElementById('a-med').innerText = as.med.toFixed(1) + "A";
 
             // Energy Stats
             document.getElementById('e-max').innerHTML = formatEnergy(es.max);
             document.getElementById('e-avg').innerHTML = formatEnergy(es.avg);
             document.getElementById('e-med').innerHTML = formatEnergy(es.med);
+
+            // Time Stats
+            document.getElementById('t-max').innerText = runDts.length ? ts.max.toFixed(1) : "-";
+            document.getElementById('t-avg').innerText = runDts.length ? ts.avg.toFixed(1) : "-";
+            document.getElementById('t-med').innerText = runDts.length ? ts.med.toFixed(1) : "-";
         }
 
         async function toggleManual() {
@@ -865,16 +873,15 @@
         async function updateSecurityRule() {
             const maxW = document.getElementById('t-limit').value;
 
-            // 1. Spara inställningen i Mem3 för UI persistence
+            // 1. Spara inställningen i Mem3
             await cmd("Mem3 " + maxW);
 
-            // 2. Bygg den kompletta Rule3: Cykelräknare (direkt nollställning) + Peak-mätare + Motorskydd
-            // OBS: Denna sträng måste vara exakt så här för att inte krocka internt i Tasmota.
-            const ruleCmd = `Rule3 ON Energy#Power>10 DO IF (Var4==0) Backlog Var4 1;Add1 1 ENDIF ENDON ON Energy#Power<5 DO Var4 0 ENDON ON Energy#Power>0 DO IF (%value%>%var2%) Var2 %value% ENDIF ENDON ON Energy#Power>${maxW} DO RuleTimer3 %mem4% ENDON ON Energy#Power<=${maxW} DO RuleTimer3 0 ENDON ON Rules#Timer=3 DO Backlog Power3 0; Power1 0 ENDON`;
+            // 2. Bygg ENBART motorskyddet i Rule 3 (så vi inte raderar cykelräknaren i Rule 2)
+            const ruleCmd = `Rule3 ON Energy#Power>${maxW} DO RuleTimer3 %mem4% ENDON ON Energy#Power<=${maxW} DO RuleTimer3 0 ENDON ON Rules#Timer=3 DO Backlog Power3 0; Power1 0 ENDON`;
 
             await cmd(ruleCmd);
 
-            // 3. Aktivera Rule 3 i "Once"-läge (läge 5) - detta är absolut nödvändigt för cykelräknaren.
+            // 3. Aktivera Rule 3 i "Once"-läge (läge 5)
             await cmd("Rule3 5");
         }
 
