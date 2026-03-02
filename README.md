@@ -3,7 +3,7 @@
 ![UI Screenshot](screenshots/ui_dashboard.png)
 
 ## 1. Purpose and Modification
-The **Amplified Test Rig** is a custom hardware and software solution designed to turn a standard Tasmota-flashed smart plug into an automated, high-precision cycle counter and test rig. It is specifically built for stress-testing power tools (e.g., drills). 
+The **Amplified Test Rig** is a custom hardware and software solution designed to turn a standard Tasmota-flashed smart plug into an automated, cycle counter and test rig. It is specifically built for stress-testing power tools (e.g., drills). 
 
 By monitoring real-time power consumption (Watts), the modified smart plug can accurately count active work cycles, filter out sensor reading lag, and protect connected machinery from overloading. It features an automated loop mode for continuous testing and an interactive Web UI for real-time telemetry, data aggregation, and hardware control.
 
