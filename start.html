@@ -674,15 +674,8 @@
                 lastLowFreqTs = now;
 
                 if (v1Res && v2Res) {
-                    if (v1Res.Var1 === "" || v2Res.Var2 === "") {
-                        // Endast vid cold boot null-strängar
-                        await cmd("Backlog Var1 0; Var2 0");
-                        tasmotaCyc = 0;
-                        tasmotaPeak = 0;
-                    } else {
-                        tasmotaCyc = parseFloat(v1Res.Var1 || 0);
-                        tasmotaPeak = parseFloat(v2Res.Var2 || 0);
-                    }
+                    tasmotaCyc = parseFloat(v1Res.Var1) || 0;
+                    tasmotaPeak = parseFloat(v2Res.Var2) || 0;
                 }
             }
 
@@ -732,9 +725,8 @@
             if (now - lastLoopToggle > LOCK_TIME) {
                 document.getElementById('loop-sw').checked = isLoopOn;
             }
-            if (now - lastManualToggle > LOCK_TIME) {
-                document.getElementById('manual-sw').checked = isRelayOn;
-            }
+            // Låter bli att synka manual-sw från isRelayOn, så att den bara styrs via manuell klickning
+            // medan relay-lampan i headern visar den faktiska statusen för själva pluggen.
 
             document.getElementById('relay-lamp').classList.toggle('active', isRelayOn);
 
@@ -862,15 +854,8 @@
         async function updateSecurityRule() {
             const maxW = document.getElementById('t-limit').value;
 
-            // 1. Save to Mem3 for UI persistence
+            // 1. Save to Mem3 for UI persistence and rule execution
             await cmd("Mem3 " + maxW);
-
-            // 2. Rewrite Rule 3 with the new hardcoded limit
-            const ruleCmd = `Rule3 ON Energy#Power>${maxW} DO RuleTimer3 %mem4% ENDON ON Energy#Power<=${maxW} DO RuleTimer3 0 ENDON ON Rules#Timer=3 DO Backlog Power3 0; Power1 0 ENDON`;
-            await cmd(ruleCmd);
-
-            // 3. Activate Rule 3 in One-Shot mode (5)
-            await cmd("Rule3 5");
         }
 
         async function resetStats() {
