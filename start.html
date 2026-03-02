@@ -887,7 +887,7 @@
 
         async function resetStats() {
             if (confirm("Vill du nollställa alla räknare och el-data i pluggen?")) {
-                await cmd("Power2 1");
+                await cmd("Backlog Var1 0; Var2 0; EnergyToday 0");
                 p_pts = []; v_pts = []; a_pts = []; logs = [];
                 runs = []; curRun = { v: [], a: [], p: [] }; lastRun = null;
 
