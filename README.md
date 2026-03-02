@@ -63,7 +63,21 @@ Run the following command to activate the rules in their strictly required modes
 Backlog Rule1 4; Rule2 5; Rule3 5; Mem1 10; Mem2 2; Mem3 1000; Mem4 1; Var4 0
 ```
 
-## 3. Web UI Features (`start.html`)
+### 3.4 Power Monitoring Calibration
+For the cycle counter and motor protection to work accurately, the smart plug's power monitoring chip must be calibrated. Standard smart plugs often have a 10-20% margin of error out of the box.
+
+**Steps to calibrate:**
+1. Connect a **known resistive load** to the smart plug (e.g., a classic 60W light bulb or a space heater with a verified rating). Do not use LED bulbs or inductive loads like drills for calibration.
+2. Turn the load ON and wait for the power readings to stabilize.
+3. Open the **Tasmota Console** and run the following commands based on your reference values:
+
+* **Adjust Voltage:** `VoltageSet <volts>` (e.g., `VoltageSet 230`)
+* **Adjust Power (Watts):** `PowerSet <watts>` (e.g., `PowerSet 60`)
+* **Adjust Current (Amps):** `CurrentSet <milliAmps>` (e.g., `CurrentSet 260`)
+
+Once calibrated, Tasmota will store these offsets in its flash memory.
+
+## 4. Web UI Features (`start.html`)
 The included `start.html` file serves as a modern, responsive control panel that communicates locally with the Tasmota API. 
 
 **Key Features:**
@@ -75,7 +89,7 @@ The included `start.html` file serves as a modern, responsive control panel that
 * **Data Export:** Export the complete test run as a `.csv` file for external analysis.
 * **Smart Polling:** Adapts the API polling rate based on the smart plug's CPU load to prevent crashes during intense data fetching.
 
-## 4. Installation & Firmware Updates
+## 5. Installation & Firmware Updates
 The repository includes a custom firmware build (`firmwareXX.bin.gz`) based on **Tasmota 15.3**. This version has been configured to embed and serve the `start.html` dashboard directly from the device's internal file system.
 
 * **Access:** Once flashed, the dashboard is accessible at `http://<device-ip>/start.html`.
@@ -88,7 +102,7 @@ Due to the size of the custom firmware (containing the embedded UI), you must of
 2. **Flash Custom:** As soon as the device reboots in minimal mode, upload the full `firmwareXX.bin.gz` file.
 3. **Update UI:** If you only need to update the `start.html` file without changing the core firmware, you can do so via the Tasmota **Manage File System** menu (if available) or by compiling a new firmware binary with the updated source.
 
-## 5. Known Limitations & Future Improvements
+## 6. Known Limitations & Future Improvements
 * **Language:** Currently, the `start.html` dashboard is available only in Swedish.
 * **Sampling Rate:** Telemetry values (V, A, W) are updated once per second (1 Hz). This limit is intentional to prevent overstressing the Tasmota smart plug's CPU with excessive network requests.
 * **Manual Mode Tracking:** Currently, detailed cycle-time statistics are calculated by the Web UI. A future improvement would be to implement local time-tracking on the Tasmota plug itself (using native variables and rules). This would allow the Web UI to ingest pre-calculated duration data, ensuring 100% accurate statistics even for manually triggered cycles where the Web UI might not be open.
